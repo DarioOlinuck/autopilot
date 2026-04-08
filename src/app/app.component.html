@@ -1,0 +1,76 @@
+<div
+  class="container-fluid"
+  appWeatherDirective
+  [skyCtx]="skyCtx"
+  [maxWidth]="maxWidth"
+  (actualWeather)="updateWeather($event)"
+>
+  <div class="row" style="max-height: 164px;">
+    <div class="col-sm-9 header-col-height">
+      <canvas #skyCanvas width="1367"></canvas>
+    </div>
+    <div class="col-sm-3 header-col-height"> <h1 style="text-align: center; ">Autopilot</h1></div>
+  </div>
+
+  <div class="row" >
+    <div class="col-sm-9 main-col-height canvas-col">
+      <canvas class="main-canvas" #canvas width="1367" height="640"></canvas>
+    </div>
+
+    <div class="col-sm-3 main-col-height">
+      
+      <div class="justify-content-center control-padding">
+        
+        <div *ngIf="car" style="height: 150;">
+          <h5>{{ car.getCarPrice() }}</h5>
+  
+          <h5>Car State: {{ car._state.stateName }}</h5>
+        </div>
+  
+        <div class="row">
+          <h5>Weather condition: {{ actualWeather }}</h5>
+        </div>
+
+
+
+        <div class="row">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-lg"
+            (click)="pickCar('sedan')"
+          >
+            Sedan
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-lg"
+            (click)="pickCar('cupe')"
+          >
+            Cupe
+          </button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="btn btn-start" (click)="start()">
+            Start
+          </button>
+        </div>
+
+        <div class="row">
+
+          <button type="button" class="btn btn-outline-dark btn-lg btn-block" (click)="turnLeft()">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+  
+          <button
+            type="button"
+            class="btn btn-outline-dark btn-lg btn-block"
+            (click)="turnRight()"
+          >
+            <i class="bi bi-arrow-down-short"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

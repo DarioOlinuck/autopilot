@@ -1,0 +1,28 @@
+.container-fluid {
+  background-color: black;
+  }
+
+.header-col-height{
+  height: 200px;
+}
+
+.main-col-height {
+  height: 650px;
+}
+
+.canvas-col {
+  background-color: #21a210;
+  border: 5px #404A3C solid;
+  border-radius: .5% !important;
+}
+
+.control-padding{
+  padding:  5% 15%;
+  border: 5px #404A3C solid;
+  background-color: #00A9F1;
+  border-radius: 2% !important;
+}
+
+.btn-start{
+  background-color: #FF0064;
+}
