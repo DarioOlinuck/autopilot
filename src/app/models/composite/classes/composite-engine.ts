@@ -1,7 +1,7 @@
 import { LeafAutoPart } from "../interfaces/leaf-auto-part.interface";
 
 export  class CompositeEngine implements LeafAutoPart{
-     price: number = 1000;
+     price = 1000;
      parts: LeafAutoPart[] = [];
 
     addAutoPart(part:LeafAutoPart){

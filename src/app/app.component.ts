@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FlyweightStone } from './models';
 
 @Component({
@@ -7,19 +7,29 @@ import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPic
   styleUrls: ['./app.component.css']
 })
 
-export class AppComponent implements OnInit, AfterViewInit {
-
-
+export class AppComponent implements OnInit {
 
   @ViewChild('skyCanvas', { static: true })
-  private skyCanvas: ElementRef<HTMLCanvasElement>;
+  private skyCanvas!: ElementRef<HTMLCanvasElement>;
 
   @ViewChild('canvas', { static: true })
-  private canvas: ElementRef<HTMLCanvasElement>;
+  private canvas!: ElementRef<HTMLCanvasElement>;
 
-  actualWeather: string;
-
+  actualWeather!: string;
   weatherInterval = 0;
+  car!: Car;
+  public skyCtx!: CanvasRenderingContext2D;
+  public maxWidth!: number;
+
+  private ctx!: CanvasRenderingContext2D;
+  private carXAxis!: number;
+  private carYAxis = 0;
+  private stone1!: FlyweightStone;
+  private stone2!: FlyweightStone;
+
+  public get IsFirstStart() {
+    return this.carXAxis === undefined;
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
@@ -51,33 +61,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  car: Car;
-  public skyCtx: CanvasRenderingContext2D;
-  public maxWidth: number;
-
-  private ctx: CanvasRenderingContext2D;
-  private carXAxis: number;
-  private carYAxis: number = 0;
-
-  private stone1: FlyweightStone;
-  private stone2: FlyweightStone;
-
-  public get IsFirstStart() {
-    return this.carXAxis === undefined;
-  }
-
   ngOnInit(): void {
     this.stone1 = new FlyweightStone(600, 10);
     this.stone2 = new FlyweightStone(900, 30);
 
     this.maxWidth = this.canvas.nativeElement.width;
-    this.skyCtx = this.skyCanvas.nativeElement.getContext('2d');
-    this.ctx = this.canvas.nativeElement.getContext('2d');
-  }
-
-  ngAfterViewInit(): void {
-    //fix clear interval and then use prototype to multiply mountains
-    //this.createNature();
+    this.skyCtx = this.skyCanvas.nativeElement.getContext('2d')!;
+    this.ctx = this.canvas.nativeElement.getContext('2d')!;
   }
 
   pickCar(carType: string) {
@@ -181,7 +171,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   createNature() {
     setInterval(() => {
-      let mountain = new Image();
+      const mountain = new Image();
       mountain.src = "../assets/mountain-removebg.png";
       this.ctx.drawImage(mountain, 0, 0);
     }, 100);
@@ -193,8 +183,3 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.actualWeather = $event;
   }
 }
-
-
-
-
-

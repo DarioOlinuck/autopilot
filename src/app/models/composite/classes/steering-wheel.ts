@@ -1,7 +1,7 @@
 import { LeafAutoPart } from "../interfaces/leaf-auto-part.interface";
 
 export  class SteeringWheel implements LeafAutoPart{
-     price: number = 100;   
+     price = 100;   
      getAutoPartPrice():number{
         return this.price;
     }
