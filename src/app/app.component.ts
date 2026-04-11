@@ -1,9 +1,85 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FlyweightStone } from './models';
+import { removeGreenBackground } from './helpers/canvas.helper';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
+  template: `
+          <div
+          class="container-fluid"
+          appWeatherDirective
+          [skyCtx]="skyCtx"
+          [maxWidth]="maxWidth"
+          (actualWeather)="updateWeather($event)"
+        >
+          <div class="row" style="max-height: 164px;">
+            <div class="col-sm-9 header-col-height">
+              <canvas #skyCanvas width="1367"></canvas>
+            </div>
+            <div class="col-sm-3 header-col-height"> <h1 style="text-align: center; ">Autopilot</h1></div>
+          </div>
+
+          <div class="row" >
+            <div class="col-sm-9 main-col-height canvas-col">
+              <canvas class="main-canvas" #canvas width="1367" height="640"></canvas>
+            </div>
+
+            <div class="col-sm-3 main-col-height">
+              
+              <div class="justify-content-center control-padding">
+                
+                <div *ngIf="car" style="height: 150;">
+                  <h5>{{ car.getCarPrice() }}</h5>
+          
+                  <h5>Car State: {{ car._state.stateName }}</h5>
+                </div>
+          
+                <div class="row">
+                  <h5>Weather condition: {{ actualWeather }}</h5>
+                </div>
+
+                <div class="row">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-lg"
+                    (click)="pickCar('sedan')"
+                  >
+                    Sedan
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-lg"
+                    (click)="pickCar('cupe')"
+                  >
+                    Cupe
+                  </button>
+                </div>
+
+                <div class="row">
+                  <button type="button" class="btn btn-start" (click)="start()">
+                    Start
+                  </button>
+                </div>
+
+                <div class="row">
+
+                  <button type="button" class="btn btn-outline-dark btn-lg btn-block" (click)="turnLeft()">
+                    <i class="bi bi-arrow-up"></i>
+                  </button>
+          
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark btn-lg btn-block"
+                    (click)="turnRight()"
+                  >
+                    <i class="bi bi-arrow-down-short"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+`,
   styleUrls: ['./app.component.css']
 })
 
@@ -24,8 +100,14 @@ export class AppComponent implements OnInit {
   private ctx!: CanvasRenderingContext2D;
   private carXAxis!: number;
   private carYAxis = 0;
+  private stone0!: FlyweightStone;
   private stone1!: FlyweightStone;
   private stone2!: FlyweightStone;
+  private carInterval: any;
+  private stone0Interval: any;
+  private stone1Interval: any;
+  private stone2Interval: any;
+  private carOffscreen!: HTMLCanvasElement;
 
   public get IsFirstStart() {
     return this.carXAxis === undefined;
@@ -62,6 +144,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.stone0 = new FlyweightStone(400, 15);
     this.stone1 = new FlyweightStone(600, 10);
     this.stone2 = new FlyweightStone(900, 30);
 
@@ -98,60 +181,45 @@ export class AppComponent implements OnInit {
 
     this.car.state = new CarStartedState();
     this.initPosition();
+    this.carOffscreen = removeGreenBackground(this.car.imgTag);
 
-
-    const i = setInterval(() => {
+    this.carInterval = setInterval(() => {
 
       // clear canvas
       //create functions and divide canvas in renctacles to keep mountain
       this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
 
-      this.ctx.drawImage(this.car.imgTag, this.carXAxis, this.carYAxis);
+      this.ctx.drawImage(this.carOffscreen, this.carXAxis, this.carYAxis);
       this.carXAxis += this.car.speed;
 
       if (this.timeOut()) {
-        clearInterval(i);
+        clearInterval(this.carInterval);
         this.car.state = new CarPickedState();
-      }
-    }, 100);
-
-    //stone 1
-    const y = setInterval(() => {
-
-      this.ctx.drawImage(this.stone1.rockImage, this.stone1.x, this.stone1.y);
-
-      this.stone1.y += this.stone1.speed;
-
-      //evaluo que el auto no choque contra ninguno de los dos bordes verticales de la piedra
-      if (this.carXAxis == this.stone1.x && (this.carYAxis == this.stone1.y ||
-        (this.stone1.y + this.stone1.rockImage.width == this.carYAxis)
-      )) {
-        alert("crash!!")
-      }
-
-      //le doy 20 más para que la roca pase de largo y desaparezca de la imagen
-      if (this.timeOut()) {
-        clearInterval(y);
       }
     }, 50);
 
-    //stone2
-    const z = setInterval(() => {
+    //stone0
+    this.stone0Interval = setInterval(() => {
+      this.ctx.drawImage(this.stone0.rockImage, this.stone0.x, this.stone0.y);
+      this.stone0.y += this.stone0.speed;
+      if (this.collidesWithCar(this.stone0)) { alert("Craaashh"); this.resetRace(); }
+      if (this.timeOut()) { clearInterval(this.stone0Interval); }
+    }, 50);
 
+    //stone1
+    this.stone1Interval = setInterval(() => {
+      this.ctx.drawImage(this.stone1.rockImage, this.stone1.x, this.stone1.y);
+      this.stone1.y += this.stone1.speed;
+      if (this.collidesWithCar(this.stone1)) { alert("Craaashh"); this.resetRace(); }
+      if (this.timeOut()) { clearInterval(this.stone1Interval); }
+    }, 50);
+
+    //stone2
+    this.stone2Interval = setInterval(() => {
       this.ctx.drawImage(this.stone2.rockImage, this.stone2.x, this.stone2.y);
       this.stone2.y += this.stone2.speed;
-
-      //evaluo que el auto no choque contra ninguno de los dos bordes verticales de la piedra
-      if (this.carXAxis == this.stone2.x && (this.carYAxis == this.stone2.y ||
-        (this.stone2.y + this.stone2.rockImage.width == this.carYAxis)
-      )) {
-        alert("crash!!")
-      }
-
-      //le doy 20 más para que la roca pase de largo y desaparezca de la imagen
-      if (this.timeOut()) {
-        clearInterval(z);
-      }
+      if (this.collidesWithCar(this.stone2)) { alert("Craaashh"); this.resetRace(); }
+      if (this.timeOut()) { clearInterval(this.stone2Interval); }
     }, 50);
 
     //draw mountain
@@ -165,6 +233,7 @@ export class AppComponent implements OnInit {
   initPosition() {
     this.carXAxis = 0;
     this.carYAxis = 300;
+    this.stone0.y = 0;
     this.stone1.y = 0;
     this.stone2.y = 0;
   }
@@ -178,6 +247,22 @@ export class AppComponent implements OnInit {
 
   }
 
+
+  collidesWithCar(stone: FlyweightStone): boolean {
+    return (
+      this.carXAxis < stone.x + 60 &&
+      this.carXAxis + 80 > stone.x &&
+      this.carYAxis < stone.y + 60 &&
+      this.carYAxis + 40 > stone.y
+    );
+  }
+
+  resetRace() {
+    clearInterval(this.carInterval);
+    clearInterval(this.stone0Interval);
+    clearInterval(this.stone1Interval);
+    clearInterval(this.stone2Interval);
+  }
 
   updateWeather($event: string) {
     this.actualWeather = $event;

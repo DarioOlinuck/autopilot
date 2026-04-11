@@ -24,7 +24,7 @@ export class Cupe implements Car {
   }
 
   constructor() {
-    this.speed = 50;
+    this.speed = 35;
     this.imgTag = new Image();
     this.imgTag.src = "../assets/cupeGreen.jpg";
     this.state = new CarPickedState();
