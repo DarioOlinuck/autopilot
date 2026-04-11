@@ -1,9 +1,13 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { NgIf } from '@angular/common';
 import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FlyweightStone } from './models';
 import { removeGreenBackground } from './helpers/canvas.helper';
+import { WeatherDirectiveDirective } from './directives/weather-directive.directive';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [NgIf, WeatherDirectiveDirective],
   template: `
           <div
           class="container-fluid"

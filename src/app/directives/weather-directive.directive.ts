@@ -4,7 +4,8 @@ import { BlackboardService } from '../services/blackboard.service';
 import { interval } from 'rxjs';
 
 @Directive({
-  selector: '[appWeatherDirective]'
+  selector: '[appWeatherDirective]',
+  standalone: true
 })
 export class WeatherDirectiveDirective implements OnInit{
   @Input()skyCtx:CanvasRenderingContext2D;
