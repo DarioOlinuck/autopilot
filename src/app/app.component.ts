@@ -133,16 +133,13 @@ export class AppComponent implements OnInit {
   }
 
   setCarState() {
-    //If the user press 'a' for the first time it will enter here
     if (this.car?.state instanceof CarPickedState) {
       this.car.state = new CarOnAutopilot();
     }
     else if (this.car.state instanceof CarStartedState) {
-      //if the car is started it can not change its state
       alert("Can not change state on a running car")
     }
     else {
-      //it will create the state as picked
       this.car.state = new CarPickedState();
     }
   }
@@ -189,8 +186,6 @@ export class AppComponent implements OnInit {
 
     this.carInterval = setInterval(() => {
 
-      // clear canvas
-      //create functions and divide canvas in renctacles to keep mountain
       this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
 
       this.ctx.drawImage(this.carOffscreen, this.carXAxis, this.carYAxis);
@@ -202,7 +197,6 @@ export class AppComponent implements OnInit {
       }
     }, 50);
 
-    //stone0
     this.stone0Interval = setInterval(() => {
       this.ctx.drawImage(this.stone0.rockImage, this.stone0.x, this.stone0.y);
       this.stone0.y += this.stone0.speed;
@@ -210,7 +204,6 @@ export class AppComponent implements OnInit {
       if (this.timeOut()) { clearInterval(this.stone0Interval); }
     }, 50);
 
-    //stone1
     this.stone1Interval = setInterval(() => {
       this.ctx.drawImage(this.stone1.rockImage, this.stone1.x, this.stone1.y);
       this.stone1.y += this.stone1.speed;
@@ -218,15 +211,12 @@ export class AppComponent implements OnInit {
       if (this.timeOut()) { clearInterval(this.stone1Interval); }
     }, 50);
 
-    //stone2
     this.stone2Interval = setInterval(() => {
       this.ctx.drawImage(this.stone2.rockImage, this.stone2.x, this.stone2.y);
       this.stone2.y += this.stone2.speed;
       if (this.collidesWithCar(this.stone2)) { alert("Craaashh"); this.resetRace(); }
       if (this.timeOut()) { clearInterval(this.stone2Interval); }
     }, 50);
-
-    //draw mountain
 
   }
 

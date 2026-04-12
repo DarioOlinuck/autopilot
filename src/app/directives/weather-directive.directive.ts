@@ -23,19 +23,19 @@ export class WeatherDirectiveDirective implements OnInit{
   }
 
   saveWeather() {
-    let claud = new Weather("Claudy", "./../assets/claudy.png");
+    let cloudy = new Weather("Cloudy", "./../assets/claudy.png");
     let sunny = new Weather("Sunny", "./../assets/sunny.png");
     let snowy = new Weather("Snowy", "./../assets/snowy.png");
 
-    let weatherArray: Weather[] = [claud, snowy, sunny];
+    let weatherArray: Weather[] = [cloudy, snowy, sunny];
 
-    let weatherdForecast = Math.floor(Math.random() * 3);
+    let weatherForecast = Math.floor(Math.random() * 3);
   
     setInterval(() => {
-      let wheatherObject = new Image();
-      wheatherObject.src = weatherArray[weatherdForecast].imagePath;
-      this.blackboardService.postWeather(weatherArray[weatherdForecast].name);
-      this.skyCtx.drawImage(wheatherObject, this.maxWidth - wheatherObject.width, 0);
+      let weatherObject = new Image();
+      weatherObject.src = weatherArray[weatherForecast].imagePath;
+      this.blackboardService.postWeather(weatherArray[weatherForecast].name);
+      this.skyCtx.drawImage(weatherObject, this.maxWidth - weatherObject.width, 0);
     }, 0);
   } 
 }
