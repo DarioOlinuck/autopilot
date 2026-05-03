@@ -6,7 +6,9 @@ import { CarState } from './state/car-state.model';
 import { CarOnAutopilot } from './state/car-on-autopilot-state.model';
 import { CarPickedState } from './state/car-picked-state.model';
 import { CarStartedState } from './state/car-started-state.model';
-import { FlyweightStone } from './flyweight/flyweight-stone.model';
+import { FallingObject } from './flyweight/falling-object.model';
+import { FallingObjectType } from './flyweight/falling-object-type.model';
+import { FallingObjectFactory } from './flyweight/falling-object-factory.model';
 
 export {
     SedanFactory,
@@ -17,7 +19,9 @@ export {
     CarPickedState,
     CarOnAutopilot,
     CarStartedState,
-    FlyweightStone
+    FallingObject,
+    FallingObjectType,
+    FallingObjectFactory
 }
 
 export const ALL: any[] = [
@@ -26,5 +30,5 @@ export const ALL: any[] = [
     Weather,
     CarPickedState,
     CarOnAutopilot,
-    CarStartedState, 
-    FlyweightStone]
+    CarStartedState,
+    FallingObject]
