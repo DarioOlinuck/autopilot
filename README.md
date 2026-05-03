@@ -21,7 +21,7 @@ has an array of LeafAutoParts like AirFilter, both classes implements the LeafAu
 
 **-Facade:** Is used on Weather Blackboard library with the BlackBoard Pattern, that gathers information from an array of sources about the weather and then the Autopilot program reads from there. 
 
-**-Flyweight:** Is going to be used to create obstacles to the car movement on the road. A flyweight is a shared object that can be used in multiple context simultaneously. Flyweight can not make assumptions about the context where they operate (the key concept is the distinction between intrinsic and extrinsic state. Instrinsic state is stored in a flyweight. So two or three rocks falling from a mountain could be a flyweigth...).
+**-Flyweight:** Used to create the falling obstacles (stone, log, chicken) that the car must avoid. Each obstacle type is represented by a single shared `FallingObjectType` instance holding intrinsic state (image, terminal velocity, dimensions), while individual `FallingObject` instances only carry extrinsic state (x, y position). A `FallingObjectFactory` registry returns the same shared type instance for every object of the same kind, so memory cost stays flat regardless of how many obstacles are on screen.
 
 **Decorator**: is going to be used to add special functionalities to the selected car, like a sound system or automatic light
 
