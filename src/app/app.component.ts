@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { NgIf } from '@angular/common';
-import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FlyweightStone } from './models';
+import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FallingObject, FallingObjectFactory } from './models';
 import { removeGreenBackground } from './helpers/canvas.helper';
 import { WeatherDirectiveDirective } from './directives/weather-directive.directive';
 
@@ -104,13 +104,9 @@ export class AppComponent implements OnInit {
   private ctx!: CanvasRenderingContext2D;
   private carXAxis!: number;
   private carYAxis = 0;
-  private stone0!: FlyweightStone;
-  private stone1!: FlyweightStone;
-  private stone2!: FlyweightStone;
+  private fallingObjects: FallingObject[] = [];
   private carInterval: any;
-  private stone0Interval: any;
-  private stone1Interval: any;
-  private stone2Interval: any;
+  private fallingObjectIntervals: any[] = [];
   private carOffscreen!: HTMLCanvasElement;
 
   public get IsFirstStart() {
@@ -145,9 +141,11 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.stone0 = new FlyweightStone(400, 15);
-    this.stone1 = new FlyweightStone(600, 10);
-    this.stone2 = new FlyweightStone(900, 30);
+    this.fallingObjects = [
+      new FallingObject(400, FallingObjectFactory.getStone()),
+      new FallingObject(600, FallingObjectFactory.getLog()),
+      new FallingObject(900, FallingObjectFactory.getChicken()),
+    ];
 
     this.maxWidth = this.canvas.nativeElement.width;
     this.skyCtx = this.skyCanvas.nativeElement.getContext('2d')!;
@@ -197,26 +195,14 @@ export class AppComponent implements OnInit {
       }
     }, 50);
 
-    this.stone0Interval = setInterval(() => {
-      this.ctx.drawImage(this.stone0.rockImage, this.stone0.x, this.stone0.y);
-      this.stone0.y += this.stone0.speed;
-      if (this.collidesWithCar(this.stone0)) { alert("Craaashh"); this.resetRace(); }
-      if (this.timeOut()) { clearInterval(this.stone0Interval); }
-    }, 50);
-
-    this.stone1Interval = setInterval(() => {
-      this.ctx.drawImage(this.stone1.rockImage, this.stone1.x, this.stone1.y);
-      this.stone1.y += this.stone1.speed;
-      if (this.collidesWithCar(this.stone1)) { alert("Craaashh"); this.resetRace(); }
-      if (this.timeOut()) { clearInterval(this.stone1Interval); }
-    }, 50);
-
-    this.stone2Interval = setInterval(() => {
-      this.ctx.drawImage(this.stone2.rockImage, this.stone2.x, this.stone2.y);
-      this.stone2.y += this.stone2.speed;
-      if (this.collidesWithCar(this.stone2)) { alert("Craaashh"); this.resetRace(); }
-      if (this.timeOut()) { clearInterval(this.stone2Interval); }
-    }, 50);
+    this.fallingObjects.forEach((obj, i) => {
+      this.fallingObjectIntervals[i] = setInterval(() => {
+        obj.draw(this.ctx);
+        obj.y += obj.speed;
+        if (this.collidesWithCar(obj)) { alert("Craaashh"); this.resetRace(); }
+        if (this.timeOut()) { clearInterval(this.fallingObjectIntervals[i]); }
+      }, 50);
+    });
 
   }
 
@@ -227,9 +213,7 @@ export class AppComponent implements OnInit {
   initPosition() {
     this.carXAxis = 0;
     this.carYAxis = 300;
-    this.stone0.y = 0;
-    this.stone1.y = 0;
-    this.stone2.y = 0;
+    this.fallingObjects.forEach(obj => obj.y = 0);
   }
 
   createNature() {
@@ -242,20 +226,18 @@ export class AppComponent implements OnInit {
   }
 
 
-  collidesWithCar(stone: FlyweightStone): boolean {
+  collidesWithCar(obj: FallingObject): boolean {
     return (
-      this.carXAxis < stone.x + 60 &&
-      this.carXAxis + 80 > stone.x &&
-      this.carYAxis < stone.y + 60 &&
-      this.carYAxis + 40 > stone.y
+      this.carXAxis < obj.x + obj.width &&
+      this.carXAxis + 80 > obj.x &&
+      this.carYAxis < obj.y + obj.height &&
+      this.carYAxis + 40 > obj.y
     );
   }
 
   resetRace() {
     clearInterval(this.carInterval);
-    clearInterval(this.stone0Interval);
-    clearInterval(this.stone1Interval);
-    clearInterval(this.stone2Interval);
+    this.fallingObjectIntervals.forEach(id => clearInterval(id));
   }
 
   updateWeather($event: string) {
