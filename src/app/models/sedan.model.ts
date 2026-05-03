@@ -21,7 +21,7 @@ export class Sedan implements Car {
   constructor() {
     this.speed = 25;
     this.imgTag = new Image();
-    this.imgTag.src = "../assets/carsyGreen.jpg";
+    this.imgTag.src = "../assets/carsyGreen.webp";
     this.state = new CarPickedState();
     this.compositeEngine = new CompositeEngine();
     this.compositeEngine.addAutoPart(new OilPan())

@@ -23,9 +23,9 @@ export class WeatherDirectiveDirective implements OnInit{
   }
 
   saveWeather() {
-    let cloudy = new Weather("Cloudy", "./../assets/claudy.png");
-    let sunny = new Weather("Sunny", "./../assets/sunny.png");
-    let snowy = new Weather("Snowy", "./../assets/snowy.png");
+    let cloudy = new Weather("Cloudy", "./../assets/claudy.webp");
+    let sunny = new Weather("Sunny", "./../assets/sunny.webp");
+    let snowy = new Weather("Snowy", "./../assets/snowy.webp");
 
     let weatherArray: Weather[] = [cloudy, snowy, sunny];
 

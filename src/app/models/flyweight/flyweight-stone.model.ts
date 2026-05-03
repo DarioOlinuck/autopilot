@@ -9,6 +9,6 @@ export class FlyweightStone {
 
         this.x = xPosition;
         this.speed = speed;
-        this.rockImage.src = "../assets/rocky-removebg-preview.png";
+        this.rockImage.src = "../assets/rocky-removebg-preview.webp";
     }
 }
