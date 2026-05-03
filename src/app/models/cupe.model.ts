@@ -26,7 +26,7 @@ export class Cupe implements Car {
   constructor() {
     this.speed = 35;
     this.imgTag = new Image();
-    this.imgTag.src = "../assets/cupeGreen.jpg";
+    this.imgTag.src = "../assets/cupeGreen.webp";
     this.state = new CarPickedState();
     this.compositeEngine = new CompositeEngine();
     this.compositeEngine.addAutoPart(new OilPan())

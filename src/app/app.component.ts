@@ -235,7 +235,7 @@ export class AppComponent implements OnInit {
   createNature() {
     setInterval(() => {
       const mountain = new Image();
-      mountain.src = "../assets/mountain-removebg.png";
+      mountain.src = "../assets/mountain-removebg.webp";
       this.ctx.drawImage(mountain, 0, 0);
     }, 100);
 
