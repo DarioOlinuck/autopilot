@@ -9,7 +9,6 @@ npm start          # Dev server at localhost:4200
 npm run build      # Production build → dist/autopilot/
 npm test           # Karma/Jasmine unit tests (use --watch=false --browsers=ChromeHeadless in CI)
 npm run lint       # ESLint via @angular-eslint
-npm run e2e        # Protractor end-to-end tests
 ```
 
 To run a single test file: `npx ng test --include='**/foo.spec.ts'`
@@ -59,4 +58,4 @@ All assets in `src/assets/` are **WebP**. Car sprites (`cupeGreen.webp`, `carsyG
 
 ## Angular Version & Tooling
 
-Angular **16.2** with **standalone components**, TypeScript 5.1, ESLint via `@angular-eslint`, RxJS 7.8, Zone.js 0.13. Bootstrap 5 + jQuery are loaded as global scripts in `angular.json`. Production build has AOT enabled and replaces `environment.ts` with `environment.prod.ts`. CI runs on Node 18 (`.github/workflows/ci.yml`).
+Angular **17.3** with **standalone components**, TypeScript 5.3, ESLint via `@angular-eslint`, RxJS 7.8, Zone.js 0.14. Builder is `@angular-devkit/build-angular:browser` (the legacy webpack-based builder — not yet migrated to the v17 esbuild `:application` builder). Bootstrap 5 + jQuery are loaded as global scripts in `angular.json`. Production build has AOT enabled and replaces `environment.ts` with `environment.prod.ts`. CI runs on Node 18 (`.github/workflows/ci.yml`); Angular 17 requires Node 18.13+ or 20.9+ locally.
