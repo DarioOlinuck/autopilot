@@ -1,35 +1,20 @@
-import {Car} from './car.model';
-import { OilPan, EngineBlock, AirFilter } from './composite';
+import { Car } from './car.model';
 import { CompositeEngine } from './composite/classes/composite-engine';
+import { OilPan, EngineBlock, AirFilter } from './composite';
 import { CarPickedState } from '.';
-import { CarState } from './state/car-state.model';
 
-export class Sedan implements Car {
-  speed;
-  imgTag;
-  compositeEngine: CompositeEngine;
-  _state:CarState;
+export class Sedan extends Car {
 
-  set state(state: CarState) {
-    this._state = state
-  }
-
-  get state() {
-    return this._state;
-  }
-  
   constructor() {
+    super();
     this.speed = 25;
     this.imgTag = new Image();
     this.imgTag.src = "../assets/carsyGreen.webp";
     this.state = new CarPickedState();
     this.compositeEngine = new CompositeEngine();
-    this.compositeEngine.addAutoPart(new OilPan())
-    this.compositeEngine.addAutoPart(new EngineBlock())
-    this.compositeEngine.addAutoPart(new AirFilter())
-  }
-  public getCarPrice(): string {
-    return `The actual cost of the car is $: ${this.compositeEngine.getAutoPartPrice()}`;
+    this.compositeEngine.addAutoPart(new OilPan());
+    this.compositeEngine.addAutoPart(new EngineBlock());
+    this.compositeEngine.addAutoPart(new AirFilter());
   }
 
   public getCarSpeed(): string {
