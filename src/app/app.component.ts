@@ -98,6 +98,8 @@ export class AppComponent implements OnInit {
   actualWeather!: string;
   weatherInterval = 0;
   car!: Car;
+  private cachedSedan?: Car;
+  private cachedCupe?: Car;
   public skyCtx!: CanvasRenderingContext2D;
   public maxWidth!: number;
 
@@ -155,10 +157,12 @@ export class AppComponent implements OnInit {
   pickCar(carType: string) {
     switch (carType) {
       case 'sedan':
-        this.car = new SedanFactory().createCar();
+        this.cachedSedan ??= new SedanFactory().createCar();
+        this.car = this.cachedSedan.clone();
         break;
       case 'cupe':
-        this.car = new CupeFactory().createCar();
+        this.cachedCupe ??= new CupeFactory().createCar();
+        this.car = this.cachedCupe.clone();
         break;
     }
   }

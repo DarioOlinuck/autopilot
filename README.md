@@ -10,8 +10,7 @@ Software Design Patterns - TypeScript examples
 
 **-Factory Method:** Factory Method is a creational design pattern that provides an interface for creating objects in a superclass but allows subclasses to alter the type of objects that will be created. We are using CarFactory as the superclass and CupeFactory and SedanFactory as subclasses. With createCar as Factory Method, the objects are still created via the new operator, but it’s being called from within the createCar factory method.
 
-**-Prototype Patterns:** Is going to be used to create cars when the one that is requested to be created
-is the same as the one that was already created.
+**-Prototype Patterns:** Used in `pickCar()` to avoid re-running the full factory pipeline when the user picks the same car type more than once. The first time a type is picked, `SedanFactory` / `CupeFactory` builds the car and the result is cached. Subsequent picks of the same type call `.clone()` on the cached instance — a shallow copy with the prototype chain preserved (so methods stay intact) and a fresh `CarPickedState`. `clone()` is declared on the `Car` interface and implemented in each concrete car class.
 
 ##Structural##
 
