@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm start          # Dev server at localhost:4200
-npm run build      # Production build → dist/autopilot/
+npm run build      # Production build → dist/autopilot/browser/
 npm test           # Karma/Jasmine unit tests (use --watch=false --browsers=ChromeHeadless in CI)
 npm run lint       # ESLint via @angular-eslint
 ```
@@ -58,4 +58,4 @@ All assets in `src/assets/` are **WebP**. Car sprites (`cupeGreen.webp`, `carsyG
 
 ## Angular Version & Tooling
 
-Angular **17.3** with **standalone components**, TypeScript 5.3, ESLint via `@angular-eslint`, RxJS 7.8, Zone.js 0.14. Builder is `@angular-devkit/build-angular:browser` (the legacy webpack-based builder — not yet migrated to the v17 esbuild `:application` builder). Bootstrap 5 + jQuery are loaded as global scripts in `angular.json`. Production build has AOT enabled and replaces `environment.ts` with `environment.prod.ts`. CI runs on Node 18 (`.github/workflows/ci.yml`); Angular 17 requires Node 18.13+ or 20.9+ locally.
+Angular **18.2** with **standalone components**, TypeScript 5.5, ESLint via `@angular-eslint`, RxJS 7.8, Zone.js 0.14. Builder is `@angular/build:application` (the esbuild-based builder); polyfills are declared as `["zone.js"]` in `angular.json` rather than via a `polyfills.ts` file. Bootstrap 5 SCSS is loaded as a global stylesheet — no jQuery and no Bootstrap JS bundle. Production build has AOT enabled, hashes output to `dist/autopilot/browser/`, and replaces `environment.ts` with `environment.prod.ts`. CI and local dev run on Node 20 (`.nvmrc`, `.github/workflows/ci.yml`); Angular 18 requires Node 18.19+, 20.11+, or 22.x.
