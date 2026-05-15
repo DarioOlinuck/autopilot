@@ -1,7 +1,17 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
-import { SedanFactory, CupeFactory, Car, CarStartedState, CarOnAutopilot, CarPickedState, FallingObject, FallingObjectFactory } from './models';
-import { removeGreenBackground } from './helpers/canvas.helper';
+import {
+  Car,
+  CommandInvoker,
+  FallingObject,
+  FallingObjectFactory,
+  PickCarCommand,
+  StartRaceCommand,
+  ToggleAutopilotCommand,
+  TurnLeftCommand,
+  TurnRightCommand,
+} from './models';
+import { GameLoopService, RendererService } from './services';
 import { WeatherDirectiveDirective } from './directives/weather-directive.directive';
 
 @Component({
@@ -13,7 +23,7 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
           class="container-fluid"
           appWeatherDirective
           [skyCtx]="skyCtx"
-          [maxWidth]="maxWidth"
+          [maxWidth]="renderer.maxWidth"
           (actualWeather)="updateWeather($event)"
         >
           <div class="row" style="max-height: 164px;">
@@ -29,15 +39,15 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
             </div>
 
             <div class="col-sm-3 main-col-height">
-              
+
               <div class="justify-content-center control-padding">
-                
+
                 <div *ngIf="car" style="height: 150;">
                   <h5>{{ car.getCarPrice() }}</h5>
-          
+
                   <h5>Car State: {{ car._state.stateName }}</h5>
                 </div>
-          
+
                 <div class="row">
                   <h5>Weather condition: {{ actualWeather }}</h5>
                 </div>
@@ -70,7 +80,7 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
                   <button type="button" class="btn btn-outline-dark btn-lg btn-block" (click)="turnLeft()">
                     <i class="bi bi-arrow-up"></i>
                   </button>
-          
+
                   <button
                     type="button"
                     class="btn btn-outline-dark btn-lg btn-block"
@@ -86,8 +96,9 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
 `,
   styleUrls: ['./app.component.css']
 })
-
 export class AppComponent implements OnInit {
+  private gameLoop = inject(GameLoopService);
+  protected renderer = inject(RendererService);
 
   @ViewChild('skyCanvas', { static: true })
   private skyCanvas!: ElementRef<HTMLCanvasElement>;
@@ -96,155 +107,57 @@ export class AppComponent implements OnInit {
   private canvas!: ElementRef<HTMLCanvasElement>;
 
   actualWeather!: string;
-  weatherInterval = 0;
-  car!: Car;
-  private cachedSedan?: Car;
-  private cachedCupe?: Car;
-  public skyCtx!: CanvasRenderingContext2D;
-  public maxWidth!: number;
+  skyCtx!: CanvasRenderingContext2D;
 
-  private ctx!: CanvasRenderingContext2D;
-  private carXAxis!: number;
-  private carYAxis = 0;
-  private fallingObjects: FallingObject[] = [];
-  private carInterval: any;
-  private fallingObjectIntervals: any[] = [];
-  private carOffscreen!: HTMLCanvasElement;
+  private invoker = new CommandInvoker();
+  private pickSedan = new PickCarCommand(this.gameLoop, 'sedan');
+  private pickCupe = new PickCarCommand(this.gameLoop, 'cupe');
+  private startRace = new StartRaceCommand(this.gameLoop);
+  private turnLeftCmd = new TurnLeftCommand(this.gameLoop);
+  private turnRightCmd = new TurnRightCommand(this.gameLoop);
 
-  public get IsFirstStart() {
-    return this.carXAxis === undefined;
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent) {
-    switch (event.key) {
-      case "a":
-        this.setCarState();
-        break;
-      case "ArrowLeft":
-        this.turnLeft();
-        break;
-      case "ArrowRight":
-        this.turnRight()
-        break;
-    }
-  }
-
-  setCarState() {
-    if (this.car?.state instanceof CarPickedState) {
-      this.car.state = new CarOnAutopilot();
-    }
-    else if (this.car.state instanceof CarStartedState) {
-      alert("Can not change state on a running car")
-    }
-    else {
-      this.car.state = new CarPickedState();
-    }
+  get car(): Car | undefined {
+    return this.gameLoop.car;
   }
 
   ngOnInit(): void {
-    this.fallingObjects = [
+    this.renderer.bindMainCanvas(this.canvas.nativeElement);
+    this.skyCtx = this.skyCanvas.nativeElement.getContext('2d')!;
+
+    this.gameLoop.setFallingObjects([
       new FallingObject(400, FallingObjectFactory.getStone()),
       new FallingObject(600, FallingObjectFactory.getLog()),
       new FallingObject(900, FallingObjectFactory.getChicken()),
-    ];
+    ]);
 
-    this.maxWidth = this.canvas.nativeElement.width;
-    this.skyCtx = this.skyCanvas.nativeElement.getContext('2d')!;
-    this.ctx = this.canvas.nativeElement.getContext('2d')!;
+    this.invoker
+      .bind('a', new ToggleAutopilotCommand(this.gameLoop))
+      .bind('ArrowLeft', this.turnLeftCmd)
+      .bind('ArrowRight', this.turnRightCmd);
   }
 
-  pickCar(carType: string) {
-    switch (carType) {
-      case 'sedan':
-        this.cachedSedan ??= new SedanFactory().createCar();
-        this.car = this.cachedSedan.clone();
-        break;
-      case 'cupe':
-        this.cachedCupe ??= new CupeFactory().createCar();
-        this.car = this.cachedCupe.clone();
-        break;
-    }
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    this.invoker.dispatch(event.key);
   }
 
-  turnLeft() {
-    this.carYAxis -= 30;
+  pickCar(carType: 'sedan' | 'cupe'): void {
+    (carType === 'sedan' ? this.pickSedan : this.pickCupe).execute();
   }
 
-  turnRight() {
-    this.carYAxis += 30;
+  start(): void {
+    this.startRace.execute();
   }
 
-  start() {
-
-    if (this.car == null) {
-      alert("please select a car!!!");
-      return
-    }
-
-    this.car.state = new CarStartedState();
-    this.initPosition();
-    this.carOffscreen = removeGreenBackground(this.car.imgTag);
-
-    this.carInterval = setInterval(() => {
-
-      this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
-
-      this.ctx.drawImage(this.carOffscreen, this.carXAxis, this.carYAxis);
-      this.carXAxis += this.car.speed;
-
-      if (this.timeOut()) {
-        clearInterval(this.carInterval);
-        this.car.state = new CarPickedState();
-      }
-    }, 50);
-
-    this.fallingObjects.forEach((obj, i) => {
-      this.fallingObjectIntervals[i] = setInterval(() => {
-        obj.draw(this.ctx);
-        obj.y += obj.speed;
-        if (this.collidesWithCar(obj)) { alert("Craaashh"); this.resetRace(); }
-        if (this.timeOut()) { clearInterval(this.fallingObjectIntervals[i]); }
-      }, 50);
-    });
-
+  turnLeft(): void {
+    this.turnLeftCmd.execute();
   }
 
-  timeOut(): boolean {
-    return this.carXAxis >= (this.maxWidth - this.car.imgTag.width - 100);
+  turnRight(): void {
+    this.turnRightCmd.execute();
   }
 
-  initPosition() {
-    this.carXAxis = 0;
-    this.carYAxis = 300;
-    this.fallingObjects.forEach(obj => obj.y = 0);
-  }
-
-  createNature() {
-    setInterval(() => {
-      const mountain = new Image();
-      mountain.src = "../assets/mountain-removebg.webp";
-      this.ctx.drawImage(mountain, 0, 0);
-    }, 100);
-
-  }
-
-
-  collidesWithCar(obj: FallingObject): boolean {
-    return (
-      this.carXAxis < obj.x + obj.width &&
-      this.carXAxis + 80 > obj.x &&
-      this.carYAxis < obj.y + obj.height &&
-      this.carYAxis + 40 > obj.y
-    );
-  }
-
-  resetRace() {
-    clearInterval(this.carInterval);
-    this.fallingObjectIntervals.forEach(id => clearInterval(id));
-  }
-
-  updateWeather($event: string) {
+  updateWeather($event: string): void {
     this.actualWeather = $event;
   }
 }
