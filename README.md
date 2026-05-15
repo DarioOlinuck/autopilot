@@ -35,6 +35,8 @@ a second state is created, then if the user presses "A", for autopilot the third
 car finishes.
 Concrete Classes: CarPickedState, CarStartedState, CarOnAutopilot;
 
+**-Command:** Used to decouple input handling from game-loop behavior. Each user action (pick car, start race, toggle autopilot, turn left/right) is encapsulated as a `Command` holding a reference to `GameLoopService`; a `CommandInvoker` maps keyboard keys to commands so `AppComponent` only dispatches by key and exposes the same commands to the buttons. The game state itself lives in `GameLoopService`, with `RendererService` and `CollisionService` factored out to keep concerns separated.
+
 **-Chain of responsability:** is going to be used to change the gear of the car depending on the speed or environments needs(in front wind).
 
 **-Blackboard**: is going to be used to manage the data input from the outer sensors, like weather and other cars heading 
