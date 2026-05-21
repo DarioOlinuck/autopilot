@@ -16,6 +16,14 @@ import { StartRaceCommand } from './command/start-race.command';
 import { ToggleAutopilotCommand } from './command/toggle-autopilot.command';
 import { TurnLeftCommand } from './command/turn-left.command';
 import { TurnRightCommand } from './command/turn-right.command';
+import {
+  DodgeNearestStrategy,
+  LaneHoldStrategy,
+  ManualSteering,
+  SteeringContext,
+  SteeringStrategy,
+  WeavingStrategy,
+} from './strategy';
 
 export {
     SedanFactory,
@@ -35,7 +43,13 @@ export {
     StartRaceCommand,
     ToggleAutopilotCommand,
     TurnLeftCommand,
-    TurnRightCommand
+    TurnRightCommand,
+    SteeringContext,
+    SteeringStrategy,
+    ManualSteering,
+    DodgeNearestStrategy,
+    WeavingStrategy,
+    LaneHoldStrategy
 }
 
 export const ALL: any[] = [

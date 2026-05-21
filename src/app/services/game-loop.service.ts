@@ -5,10 +5,13 @@ import {
   CarPickedState,
   CarStartedState,
   CupeFactory,
+  DodgeNearestStrategy,
   FallingObject,
   FallingObjectFactory,
   FallingObjectType,
+  ManualSteering,
   SedanFactory,
+  SteeringStrategy,
 } from '../models';
 import { RendererService } from './renderer.service';
 import { CollisionService } from './collision.service';
@@ -22,6 +25,12 @@ const SPAWN_MIN_MS = 600;
 const SPAWN_MAX_MS = 1400;
 const OBSTACLE_TOP_MIN = 0;
 const OBSTACLE_TOP_MAX = 120;
+const MIN_Y = 60;
+const MAX_Y = 540;
+
+function clamp(value: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, value));
+}
 
 @Injectable({ providedIn: 'root' })
 export class GameLoopService {
@@ -39,6 +48,8 @@ export class GameLoopService {
   private roundEndedAt: number | null = null;
   private tickInterval: any;
   private spawnTimeout: any;
+  private activeStrategy: SteeringStrategy = new ManualSteering();
+  private autopilotChoice: SteeringStrategy = new DodgeNearestStrategy();
 
   get timeRemainingSec(): number {
     if (!this.roundStartAt) return 0;
@@ -79,6 +90,19 @@ export class GameLoopService {
     this.carYAxis += TURN_STEP;
   }
 
+  setAutopilotChoice(strategy: SteeringStrategy): void {
+    this.autopilotChoice = strategy;
+    if (!(this.activeStrategy instanceof ManualSteering)) {
+      this.activeStrategy = strategy;
+    }
+  }
+
+  toggleAutopilot(): void {
+    this.activeStrategy = this.activeStrategy instanceof ManualSteering
+      ? this.autopilotChoice
+      : new ManualSteering();
+  }
+
   start(): void {
     if (this.car == null) {
       alert('please select a car!!!');
@@ -117,6 +141,14 @@ export class GameLoopService {
         return;
       }
     }
+
+    const delta = this.activeStrategy.decideSteer({
+      carYAxis: this.carYAxis,
+      carFixedX: CAR_FIXED_X,
+      obstacles: this.fallingObjects,
+      canvasHeight: this.renderer.maxHeight,
+    });
+    this.carYAxis = clamp(this.carYAxis + delta, MIN_Y, MAX_Y);
 
     this.renderer.drawCar(CAR_FIXED_X, this.carYAxis);
     this.bgOffset += speed;

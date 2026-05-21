@@ -4,12 +4,16 @@ import {
   Car,
   CommandInvoker,
   CupeFactory,
+  DodgeNearestStrategy,
+  LaneHoldStrategy,
   PickCarCommand,
   SedanFactory,
   StartRaceCommand,
+  SteeringStrategy,
   ToggleAutopilotCommand,
   TurnLeftCommand,
   TurnRightCommand,
+  WeavingStrategy,
 } from './models';
 import { GameLoopService, RendererService } from './services';
 import { WeatherDirectiveDirective } from './directives/weather-directive.directive';
@@ -76,6 +80,16 @@ import { removeGreenBackground } from './helpers/canvas.helper';
 
                 <div class="row">
                   <h5>Time left: {{ gameLoop.timeRemainingSec }}s</h5>
+                </div>
+
+                <div class="row">
+                  <label class="autopilot-label">Autopilot:
+                    <select (change)="onAutopilotChoice($any($event.target).value)">
+                      <option value="dodge">Dodge nearest</option>
+                      <option value="weave">Weave</option>
+                      <option value="hold">Hold lane</option>
+                    </select>
+                  </label>
                 </div>
 
                 <div class="row">
@@ -177,5 +191,18 @@ export class AppComponent implements OnInit {
 
   updateWeather($event: string): void {
     this.actualWeather = $event;
+  }
+
+  onAutopilotChoice(value: string): void {
+    const strategy = this.strategyByName(value);
+    this.gameLoop.setAutopilotChoice(strategy);
+  }
+
+  private strategyByName(value: string): SteeringStrategy {
+    switch (value) {
+      case 'weave': return new WeavingStrategy();
+      case 'hold': return new LaneHoldStrategy();
+      default: return new DodgeNearestStrategy();
+    }
   }
 }
