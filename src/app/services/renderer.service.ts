@@ -30,6 +30,10 @@ export class RendererService {
     return this.canvas.width;
   }
 
+  get maxHeight(): number {
+    return this.canvas.height;
+  }
+
   prepareCar(car: Car): void {
     this.carOffscreen = removeGreenBackground(car.imgTag);
   }

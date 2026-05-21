@@ -6,5 +6,6 @@ export class ToggleAutopilotCommand implements Command {
 
   execute(): void {
     this.gameLoop.setCarState();
+    this.gameLoop.toggleAutopilot();
   }
 }
