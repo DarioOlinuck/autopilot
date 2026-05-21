@@ -3,9 +3,9 @@ import { NgIf } from '@angular/common';
 import {
   Car,
   CommandInvoker,
-  FallingObject,
-  FallingObjectFactory,
+  CupeFactory,
   PickCarCommand,
+  SedanFactory,
   StartRaceCommand,
   ToggleAutopilotCommand,
   TurnLeftCommand,
@@ -13,6 +13,7 @@ import {
 } from './models';
 import { GameLoopService, RendererService } from './services';
 import { WeatherDirectiveDirective } from './directives/weather-directive.directive';
+import { removeGreenBackground } from './helpers/canvas.helper';
 
 @Component({
   selector: 'app-root',
@@ -26,7 +27,7 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
           [maxWidth]="renderer.maxWidth"
           (actualWeather)="updateWeather($event)"
         >
-          <div class="row" style="max-height: 164px;">
+          <div class="row">
             <div class="col-sm-9 header-col-height">
               <canvas #skyCanvas width="1367"></canvas>
             </div>
@@ -42,10 +43,31 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
 
               <div class="justify-content-center control-padding">
 
-                <div *ngIf="car" style="height: 150;">
-                  <h5>{{ car.getCarPrice() }}</h5>
+                <div class="car-picks">
+                  <button
+                    type="button"
+                    class="car-pick"
+                    [style.background-image]="sedanThumbnail ? 'url(' + sedanThumbnail + ')' : null"
+                    [class.selected]="car && car._state.stateName === 'Picked' && car.speed === 25"
+                    (click)="pickCar('sedan')"
+                    aria-label="Pick sedan"
+                  ></button>
+                  <button
+                    type="button"
+                    class="car-pick"
+                    [style.background-image]="cupeThumbnail ? 'url(' + cupeThumbnail + ')' : null"
+                    [class.selected]="car && car._state.stateName === 'Picked' && car.speed === 35"
+                    (click)="pickCar('cupe')"
+                    aria-label="Pick cupe"
+                  ></button>
+                </div>
 
-                  <h5>Car State: {{ car._state.stateName }}</h5>
+                <div style="height: 150px;">
+                  <ng-container *ngIf="car">
+                    <h5>{{ car.getCarPrice() }}</h5>
+
+                    <h5>Car State: {{ car._state.stateName }}</h5>
+                  </ng-container>
                 </div>
 
                 <div class="row">
@@ -53,20 +75,7 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
                 </div>
 
                 <div class="row">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-lg"
-                    (click)="pickCar('sedan')"
-                  >
-                    Sedan
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-lg"
-                    (click)="pickCar('cupe')"
-                  >
-                    Cupe
-                  </button>
+                  <h5>Time left: {{ gameLoop.timeRemainingSec }}s</h5>
                 </div>
 
                 <div class="row">
@@ -97,7 +106,7 @@ import { WeatherDirectiveDirective } from './directives/weather-directive.direct
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  private gameLoop = inject(GameLoopService);
+  protected gameLoop = inject(GameLoopService);
   protected renderer = inject(RendererService);
 
   @ViewChild('skyCanvas', { static: true })
@@ -108,6 +117,8 @@ export class AppComponent implements OnInit {
 
   actualWeather!: string;
   skyCtx!: CanvasRenderingContext2D;
+  sedanThumbnail = '';
+  cupeThumbnail = '';
 
   private invoker = new CommandInvoker();
   private pickSedan = new PickCarCommand(this.gameLoop, 'sedan');
@@ -122,18 +133,25 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.renderer.bindMainCanvas(this.canvas.nativeElement);
+    this.renderer.drawBackground(0);
     this.skyCtx = this.skyCanvas.nativeElement.getContext('2d')!;
 
-    this.gameLoop.setFallingObjects([
-      new FallingObject(400, FallingObjectFactory.getStone()),
-      new FallingObject(600, FallingObjectFactory.getLog()),
-      new FallingObject(900, FallingObjectFactory.getChicken()),
-    ]);
+    this.loadThumbnail(new SedanFactory().createCar().imgTag, url => this.sedanThumbnail = url);
+    this.loadThumbnail(new CupeFactory().createCar().imgTag, url => this.cupeThumbnail = url);
 
     this.invoker
       .bind('a', new ToggleAutopilotCommand(this.gameLoop))
       .bind('ArrowLeft', this.turnLeftCmd)
       .bind('ArrowRight', this.turnRightCmd);
+  }
+
+  private loadThumbnail(img: HTMLImageElement, assign: (url: string) => void): void {
+    const done = () => assign(removeGreenBackground(img).toDataURL());
+    if (img.complete && img.naturalWidth > 0) {
+      done();
+    } else {
+      img.addEventListener('load', done, { once: true });
+    }
   }
 
   @HostListener('window:keydown', ['$event'])
