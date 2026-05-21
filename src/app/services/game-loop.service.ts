@@ -7,6 +7,7 @@ import {
   CupeFactory,
   FallingObject,
   FallingObjectFactory,
+  FallingObjectType,
   SedanFactory,
 } from '../models';
 import { RendererService } from './renderer.service';
@@ -15,7 +16,12 @@ import { CollisionService } from './collision.service';
 const TICK_MS = 50;
 const TURN_STEP = 30;
 const INITIAL_CAR_Y = 300;
-const CAR_RIGHT_MARGIN = 100;
+const CAR_FIXED_X = 100;
+const ROUND_DURATION_MS = 60_000;
+const SPAWN_MIN_MS = 600;
+const SPAWN_MAX_MS = 1400;
+const OBSTACLE_TOP_MIN = 0;
+const OBSTACLE_TOP_MAX = 120;
 
 @Injectable({ providedIn: 'root' })
 export class GameLoopService {
@@ -27,13 +33,18 @@ export class GameLoopService {
 
   private cachedSedan?: Car;
   private cachedCupe?: Car;
-  private carXAxis!: number;
   private carYAxis = 0;
-  private carInterval: any;
-  private fallingObjectIntervals: any[] = [];
+  private bgOffset = 0;
+  private roundStartAt = 0;
+  private roundEndedAt: number | null = null;
+  private tickInterval: any;
+  private spawnTimeout: any;
 
-  setFallingObjects(objects: FallingObject[]): void {
-    this.fallingObjects = objects;
+  get timeRemainingSec(): number {
+    if (!this.roundStartAt) return 0;
+    const referenceTime = this.roundEndedAt ?? Date.now();
+    const remaining = ROUND_DURATION_MS - (referenceTime - this.roundStartAt);
+    return Math.max(0, Math.ceil(remaining / 1000));
   }
 
   pickCar(carType: string): void {
@@ -75,47 +86,88 @@ export class GameLoopService {
     }
 
     this.car.state = new CarStartedState();
-    this.initPosition();
+    this.carYAxis = INITIAL_CAR_Y;
+    this.bgOffset = 0;
+    this.fallingObjects = [];
+    this.roundStartAt = Date.now();
+    this.roundEndedAt = null;
     this.renderer.prepareCar(this.car);
 
-    this.carInterval = setInterval(() => {
-      this.renderer.clear();
-      this.renderer.drawCar(this.carXAxis, this.carYAxis);
-      this.carXAxis += this.car!.speed;
+    this.tickInterval = setInterval(() => this.tick(), TICK_MS);
+    this.scheduleNextSpawn();
+  }
 
-      if (this.timeOut()) {
-        clearInterval(this.carInterval);
-        this.car!.state = new CarPickedState();
-      }
-    }, TICK_MS);
+  private tick(): void {
+    const speed = this.car!.speed;
 
-    this.fallingObjects.forEach((obj, i) => {
-      this.fallingObjectIntervals[i] = setInterval(() => {
-        this.renderer.drawFallingObject(obj);
-        obj.y += obj.speed;
-        if (this.collision.collides(this.carXAxis, this.carYAxis, obj)) {
-          alert('Craaashh');
-          this.resetRace();
-        }
-        if (this.timeOut()) {
-          clearInterval(this.fallingObjectIntervals[i]);
-        }
-      }, TICK_MS);
+    this.renderer.clear();
+    this.renderer.drawBackground(this.bgOffset);
+
+    this.fallingObjects = this.fallingObjects.filter(obj => {
+      obj.x -= speed;
+      obj.y += obj.speed;
+      return obj.x + obj.width > 0;
     });
+
+    for (const obj of this.fallingObjects) {
+      this.renderer.drawFallingObject(obj);
+      if (this.collision.collides(CAR_FIXED_X, this.carYAxis, obj)) {
+        alert('Craaashh');
+        this.resetRace();
+        return;
+      }
+    }
+
+    this.renderer.drawCar(CAR_FIXED_X, this.carYAxis);
+    this.bgOffset += speed;
+
+    if (Date.now() - this.roundStartAt >= ROUND_DURATION_MS) {
+      this.endRound();
+    }
+  }
+
+  private scheduleNextSpawn(): void {
+    const delay = SPAWN_MIN_MS + Math.random() * (SPAWN_MAX_MS - SPAWN_MIN_MS);
+    this.spawnTimeout = setTimeout(() => {
+      this.spawnObstacle();
+      this.scheduleNextSpawn();
+    }, delay);
+  }
+
+  private spawnObstacle(): void {
+    const types: FallingObjectType[] = [
+      FallingObjectFactory.getStone(),
+      FallingObjectFactory.getLog(),
+      FallingObjectFactory.getChicken(),
+    ];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const startY = OBSTACLE_TOP_MIN + Math.random() * (OBSTACLE_TOP_MAX - OBSTACLE_TOP_MIN);
+    const obj = new FallingObject(this.renderer.maxWidth, type);
+    obj.y = startY;
+    this.fallingObjects.push(obj);
+  }
+
+  private endRound(): void {
+    this.roundEndedAt = Date.now();
+    this.stopTimers();
+    this.fallingObjects = [];
+    this.renderer.clear();
+    this.renderer.drawBackground(0);
+    if (this.car) {
+      this.car.state = new CarPickedState();
+    }
   }
 
   private resetRace(): void {
-    clearInterval(this.carInterval);
-    this.fallingObjectIntervals.forEach(id => clearInterval(id));
+    this.roundEndedAt = Date.now();
+    this.stopTimers();
+    this.fallingObjects = [];
+    this.renderer.clear();
+    this.renderer.drawBackground(0);
   }
 
-  private timeOut(): boolean {
-    return this.carXAxis >= this.renderer.maxWidth - this.car!.imgTag.width - CAR_RIGHT_MARGIN;
-  }
-
-  private initPosition(): void {
-    this.carXAxis = 0;
-    this.carYAxis = INITIAL_CAR_Y;
-    this.fallingObjects.forEach(obj => (obj.y = 0));
+  private stopTimers(): void {
+    clearInterval(this.tickInterval);
+    clearTimeout(this.spawnTimeout);
   }
 }
