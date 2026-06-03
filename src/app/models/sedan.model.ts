@@ -9,7 +9,7 @@ export class Sedan extends Car {
     super();
     this.speed = 25;
     this.imgTag = new Image();
-    this.imgTag.src = "../assets/carsyGreen.webp";
+    this.imgTag.src = "assets/carsyGreen.webp";
     this.state = new CarPickedState();
     this.compositeEngine = new CompositeEngine();
     this.compositeEngine.addAutoPart(new OilPan());
