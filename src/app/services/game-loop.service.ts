@@ -39,6 +39,10 @@ export class GameLoopService {
 
   car?: Car;
   fallingObjects: FallingObject[] = [];
+  roundWon = false;
+  roundCrashed = false;
+  noCarSelected = false;
+  isRunning = false;
 
   private cachedSedan?: Car;
   private cachedCupe?: Car;
@@ -56,6 +60,17 @@ export class GameLoopService {
     const referenceTime = this.roundEndedAt ?? Date.now();
     const remaining = ROUND_DURATION_MS - (referenceTime - this.roundStartAt);
     return Math.max(0, Math.ceil(remaining / 1000));
+  }
+
+  get progressPercent(): number {
+    if (!this.roundStartAt) return 0;
+    const referenceTime = this.roundEndedAt ?? Date.now();
+    const elapsed = referenceTime - this.roundStartAt;
+    return clamp((elapsed / ROUND_DURATION_MS) * 100, 0, 100);
+  }
+
+  get isAutopilotOn(): boolean {
+    return !(this.activeStrategy instanceof ManualSteering);
   }
 
   pickCar(carType: string): void {
@@ -104,10 +119,13 @@ export class GameLoopService {
   }
 
   start(): void {
+    if (this.isRunning) return;
     if (this.car == null) {
-      alert('please select a car!!!');
+      this.noCarSelected = true;
       return;
     }
+
+    this.stopTimers();
 
     this.car.state = new CarStartedState();
     this.carYAxis = INITIAL_CAR_Y;
@@ -115,10 +133,14 @@ export class GameLoopService {
     this.fallingObjects = [];
     this.roundStartAt = Date.now();
     this.roundEndedAt = null;
+    this.roundWon = false;
+    this.roundCrashed = false;
+    this.noCarSelected = false;
     this.renderer.prepareCar(this.car);
 
     this.tickInterval = setInterval(() => this.tick(), TICK_MS);
     this.scheduleNextSpawn();
+    this.isRunning = true;
   }
 
   private tick(): void {
@@ -136,7 +158,7 @@ export class GameLoopService {
     for (const obj of this.fallingObjects) {
       this.renderer.drawFallingObject(obj);
       if (this.collision.collides(CAR_FIXED_X, this.carYAxis, obj)) {
-        alert('Craaashh');
+        this.roundCrashed = true;
         this.resetRace();
         return;
       }
@@ -188,6 +210,7 @@ export class GameLoopService {
     if (this.car) {
       this.car.state = new CarPickedState();
     }
+    this.roundWon = true;
   }
 
   private resetRace(): void {
@@ -201,5 +224,6 @@ export class GameLoopService {
   private stopTimers(): void {
     clearInterval(this.tickInterval);
     clearTimeout(this.spawnTimeout);
+    this.isRunning = false;
   }
 }
