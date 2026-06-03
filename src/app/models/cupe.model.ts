@@ -9,7 +9,7 @@ export class Cupe extends Car {
     super();
     this.speed = 35;
     this.imgTag = new Image();
-    this.imgTag.src = "../assets/cupeGreen.webp";
+    this.imgTag.src = "assets/cupeGreen.webp";
     this.state = new CarPickedState();
     this.compositeEngine = new CompositeEngine();
     this.compositeEngine.addAutoPart(new OilPan());
